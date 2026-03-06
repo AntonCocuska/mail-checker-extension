@@ -6,7 +6,7 @@ let bodyCache = {};
 
 const $ = (id) => document.getElementById(id);
 const FM_BASE = "https://firstmail.ltd";
-const FETCH_TIMEOUT = 15000;
+const FETCH_TIMEOUT = 30000;
 
 function fetchWithTimeout(url, opts = {}) {
   const ctrl = new AbortController();
@@ -286,16 +286,29 @@ const RC = {
 const FM = {
   async _getCookieHeader() {
     const cookies = await chrome.cookies.getAll({ domain: "firstmail.ltd" });
+    console.log("[FM] Cookies found:", cookies.length, cookies.map(c => `${c.name}=${c.value.substring(0,8)}... (domain=${c.domain}, expires=${c.expirationDate ? new Date(c.expirationDate*1000).toISOString() : "session"}, httpOnly=${c.httpOnly})`));
+    if (!cookies.length) console.log("[FM] NO COOKIES — user needs to login on firstmail.ltd");
     return cookies.map(c => `${c.name}=${c.value}`).join("; ");
   },
 
   async _api(path, opts = {}) {
     const cookie = await FM._getCookieHeader();
+    // Also grab challenge cookies from subdomains
+    const subCookies = await chrome.cookies.getAll({ domain: ".firstmail.ltd" });
+    const allCookies = [...new Map([...subCookies, ...await chrome.cookies.getAll({ domain: "firstmail.ltd" })].map(c => [c.name, c])).values()];
+    const cookieStr = allCookies.map(c => `${c.name}=${c.value}`).join("; ");
+    console.log("[FM] _api cookies:", allCookies.length, "for", path);
     const { headers: extraHeaders, ...restOpts } = opts;
     const r = await fetchWithTimeout(`${FM_BASE}${path}`, {
       credentials: "include",
       ...restOpts,
-      headers: { "Cookie": cookie, ...extraHeaders },
+      headers: {
+        "Cookie": cookieStr,
+        "Accept": "application/json, text/plain, */*",
+        "Referer": "https://firstmail.ltd/webmail/",
+        "X-Requested-With": "XMLHttpRequest",
+        ...extraHeaders,
+      },
     });
     return r;
   },
@@ -314,12 +327,14 @@ const FM = {
     setStatus("Connecting to FirstMail...");
     try {
       const data = await FM._json("/webmail/api/session/accounts/");
+      console.log("[FM] login response:", JSON.stringify(data).substring(0, 500));
       if (data.success && data.accounts && data.accounts.length > 0) {
         setStatus("Connected");
         return;
       }
       throw new Error("No session");
     } catch(e) {
+      console.log("[FM] login error:", e.message);
       if (e.name === "AbortError") throw new Error("FirstMail timeout. Server not responding.");
       if (e.message === "Failed to fetch") throw new Error("No connection to FirstMail. Check your internet.");
       throw new Error("Not logged in. Open firstmail.ltd, login with «Memorize session» ✓");
@@ -389,20 +404,27 @@ function renderBody(body, isHtml) {
       .replace(/<img[^>]*(width\s*=\s*["']?1["']?|height\s*=\s*["']?1["']?|display\s*:\s*none)[^>]*>/gi, "")
       .replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, "")
       .replace(/\s+on\w+\s*=\s*[^\s>]+/gi, "")
-      .replace(/<a\s/gi, '<a target="_blank" rel="noopener" ');
+      .replace(/<a\s/gi, '<a target="_blank" rel="noopener" ')
+      .replace(/\s*bgcolor\s*=\s*["'][^"']*["']/gi, "")
+      .replace(/\s*bgcolor\s*=\s*\S+/gi, "")
+      .replace(/background\s*:\s*#[0-9a-fA-F]{3,8}/gi, "background:transparent")
+      .replace(/background-color\s*:\s*#[0-9a-fA-F]{3,8}/gi, "background-color:transparent")
+      .replace(/background-color\s*:\s*(?:white|rgb\([^)]+\))/gi, "background-color:transparent");
     c.innerHTML = `
       <style>
-        .mr{font-family:-apple-system,sans-serif;font-size:13px;line-height:1.6;color:#ddd;word-wrap:break-word}
-        .mr *{max-width:100%!important;box-sizing:border-box!important}
+        .mr{font-family:-apple-system,sans-serif;font-size:13px;line-height:1.6;color:#ddd;word-wrap:break-word;background:#1a1a2e!important}
+        .mr *{max-width:100%!important;box-sizing:border-box!important;background-color:transparent!important;color:#ddd!important}
         .mr img{max-width:100%!important;height:auto!important;border-radius:4px}
         .mr a{color:#e94560!important;text-decoration:none!important;word-break:break-all}
         .mr a:hover{text-decoration:underline!important}
         .mr table{border-collapse:collapse;max-width:100%!important;width:auto!important}
-        .mr td,.mr th{max-width:390px!important}
+        .mr td,.mr th{max-width:390px!important;background-color:transparent!important}
         .mr hr{border:none;border-top:1px solid #333;margin:10px 0}
-        .mr h1,.mr h2,.mr h3{color:#fff;font-size:14px;margin:8px 0 4px}
+        .mr h1,.mr h2,.mr h3{color:#fff!important;font-size:14px;margin:8px 0 4px}
         .mr p{margin:4px 0}
-        .mr blockquote{border-left:3px solid #333;padding-left:10px;margin:6px 0;color:#999}
+        .mr blockquote{border-left:3px solid #333;padding-left:10px;margin:6px 0;color:#999!important}
+        .mr span,.mr div,.mr td,.mr th,.mr p,.mr li,.mr b,.mr strong,.mr em,.mr i{color:#ddd!important}
+        .mr strong,.mr b{color:#fff!important}
       </style>
       <div class="mr">${clean}</div>`;
   } else {
@@ -530,6 +552,15 @@ async function init() {
   $("settingsBtn").addEventListener("click", () => showSettings());
   $("refreshBtn").addEventListener("click", () => { bodyCache = {}; loadInbox(); });
   $("backBtn").addEventListener("click", showList);
+  $("emailDisplay").addEventListener("click", () => {
+    const email = $("emailDisplay").textContent;
+    if (email) {
+      navigator.clipboard.writeText(email);
+      const orig = $("emailDisplay").textContent;
+      $("emailDisplay").textContent = "Copied!";
+      setTimeout(() => { $("emailDisplay").textContent = orig; }, 1000);
+    }
+  });
 
   const data = await chrome.storage.local.get(["mailConfig", "mailCache"]);
   config = data.mailConfig;
