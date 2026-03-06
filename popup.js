@@ -454,14 +454,23 @@ async function loadInbox() {
   const P = getProvider();
 
   try {
-    // Always login first to get CSRF token
-    await P.login();
-    messages = await P.fetchInbox();
+    // Login only if no token cached (first load or after error)
+    if (!token) await P.login();
+    try {
+      messages = await P.fetchInbox();
+    } catch (e2) {
+      // Token might be stale — re-login once and retry
+      console.log("[MAIL] fetchInbox failed, re-login:", e2.message);
+      token = "";
+      await P.login();
+      messages = await P.fetchInbox();
+    }
     renderMessages(messages);
     chrome.storage.local.set({ mailCache: { messages, time: Date.now() } });
     setStatus(`${messages.length} messages · ${new Date().toLocaleTimeString()}`);
   } catch (e) {
     console.log("[MAIL] loadInbox error:", e.message);
+    token = "";
     $("mailList").innerHTML = `<div class="error-msg">${esc(e.message)}<br><br><button class="btn" onclick="location.reload()">Retry</button></div>`;
     setStatus("Error");
   }
