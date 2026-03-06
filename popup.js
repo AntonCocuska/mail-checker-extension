@@ -404,27 +404,20 @@ function renderBody(body, isHtml) {
       .replace(/<img[^>]*(width\s*=\s*["']?1["']?|height\s*=\s*["']?1["']?|display\s*:\s*none)[^>]*>/gi, "")
       .replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, "")
       .replace(/\s+on\w+\s*=\s*[^\s>]+/gi, "")
-      .replace(/<a\s/gi, '<a target="_blank" rel="noopener" ')
-      .replace(/\s*bgcolor\s*=\s*["'][^"']*["']/gi, "")
-      .replace(/\s*bgcolor\s*=\s*\S+/gi, "")
-      .replace(/background\s*:\s*#[0-9a-fA-F]{3,8}/gi, "background:transparent")
-      .replace(/background-color\s*:\s*#[0-9a-fA-F]{3,8}/gi, "background-color:transparent")
-      .replace(/background-color\s*:\s*(?:white|rgb\([^)]+\))/gi, "background-color:transparent");
+      .replace(/<a\s/gi, '<a target="_blank" rel="noopener" ');
     c.innerHTML = `
       <style>
-        .mr{font-family:-apple-system,sans-serif;font-size:13px;line-height:1.6;color:#ddd;word-wrap:break-word;background:#1a1a2e!important}
-        .mr *{max-width:100%!important;box-sizing:border-box!important;background-color:transparent!important;color:#ddd!important}
-        .mr img{max-width:100%!important;height:auto!important;border-radius:4px}
-        .mr a{color:#e94560!important;text-decoration:none!important;word-break:break-all}
+        .mr{font-family:-apple-system,sans-serif;font-size:13px;line-height:1.6;color:#333;word-wrap:break-word;background:#f5f5f5;border-radius:6px;padding:10px}
+        .mr *{max-width:100%!important;box-sizing:border-box!important}
+        .mr img{max-width:100%!important;height:auto!important}
+        .mr a{color:#1a73e8!important;text-decoration:none!important;word-break:break-all}
         .mr a:hover{text-decoration:underline!important}
         .mr table{border-collapse:collapse;max-width:100%!important;width:auto!important}
-        .mr td,.mr th{max-width:390px!important;background-color:transparent!important}
-        .mr hr{border:none;border-top:1px solid #333;margin:10px 0}
-        .mr h1,.mr h2,.mr h3{color:#fff!important;font-size:14px;margin:8px 0 4px}
+        .mr td,.mr th{max-width:390px!important}
+        .mr hr{border:none;border-top:1px solid #ddd;margin:10px 0}
+        .mr h1,.mr h2,.mr h3{color:#222;font-size:14px;margin:8px 0 4px}
         .mr p{margin:4px 0}
-        .mr blockquote{border-left:3px solid #333;padding-left:10px;margin:6px 0;color:#999!important}
-        .mr span,.mr div,.mr td,.mr th,.mr p,.mr li,.mr b,.mr strong,.mr em,.mr i{color:#ddd!important}
-        .mr strong,.mr b{color:#fff!important}
+        .mr blockquote{border-left:3px solid #ccc;padding-left:10px;margin:6px 0;color:#666}
       </style>
       <div class="mr">${clean}</div>`;
   } else {
