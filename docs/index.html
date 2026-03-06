@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mail Checker Extension</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #0d1117;
+  color: #e6edf3;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.hero {
+  text-align: center;
+  padding: 80px 20px 40px;
+  max-width: 700px;
+}
+.hero h1 {
+  font-size: 42px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #e94560, #ff6b6b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero p {
+  font-size: 18px;
+  color: #8b949e;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+.download-btn {
+  display: inline-block;
+  padding: 16px 40px;
+  background: linear-gradient(135deg, #e94560, #c73650);
+  color: #fff;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 20px rgba(233, 69, 96, 0.3);
+}
+.download-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 30px rgba(233, 69, 96, 0.5);
+}
+.version {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #484f58;
+}
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  max-width: 700px;
+  padding: 40px 20px;
+  width: 100%;
+}
+.feature {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 8px;
+  padding: 20px;
+}
+.feature h3 {
+  font-size: 14px;
+  color: #e94560;
+  margin-bottom: 8px;
+}
+.feature p {
+  font-size: 13px;
+  color: #8b949e;
+  line-height: 1.5;
+}
+.install {
+  max-width: 700px;
+  width: 100%;
+  padding: 20px;
+}
+.install h2 {
+  font-size: 20px;
+  margin-bottom: 16px;
+  color: #e6edf3;
+}
+.steps {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 8px;
+  padding: 24px;
+}
+.steps ol {
+  padding-left: 20px;
+}
+.steps li {
+  font-size: 14px;
+  color: #8b949e;
+  line-height: 1.8;
+}
+.steps code {
+  background: #0d1117;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #e94560;
+}
+.providers {
+  max-width: 700px;
+  width: 100%;
+  padding: 20px 20px 60px;
+}
+.providers h2 {
+  font-size: 20px;
+  margin-bottom: 16px;
+}
+.provider-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.provider-card {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 8px;
+  padding: 20px;
+}
+.provider-card h3 {
+  font-size: 15px;
+  color: #fff;
+  margin-bottom: 6px;
+}
+.provider-card .tag {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+.tag-auto {
+  background: rgba(46, 160, 67, 0.2);
+  color: #3fb950;
+}
+.tag-session {
+  background: rgba(233, 69, 96, 0.2);
+  color: #e94560;
+}
+.provider-card p {
+  font-size: 13px;
+  color: #8b949e;
+  line-height: 1.5;
+}
+.footer {
+  padding: 20px;
+  font-size: 12px;
+  color: #484f58;
+}
+.footer a {
+  color: #e94560;
+  text-decoration: none;
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Mail Checker</h1>
+  <p>Chrome extension for quick email checking right from the browser toolbar. Dark themed, fast, lightweight.</p>
+  <a href="https://github.com/AntonCocuska/mail-checker-extension/releases/latest/download/mail-ext.zip" class="download-btn">Download Extension</a>
+  <div class="version">v2.0 &middot; Chrome &middot; Manifest V3</div>
+</div>
+
+<div class="features">
+  <div class="feature">
+    <h3>Quick Access</h3>
+    <p>Check inbox from popup without opening webmail. Cached for instant load.</p>
+  </div>
+  <div class="feature">
+    <h3>Dark UI</h3>
+    <p>Clean dark interface. Read/unread indicators, HTML message preview.</p>
+  </div>
+  <div class="feature">
+    <h3>Two Providers</h3>
+    <p>Roundcube and FirstMail support out of the box.</p>
+  </div>
+  <div class="feature">
+    <h3>Lightweight</h3>
+    <p>No background processes. Under 25KB total. No tracking.</p>
+  </div>
+</div>
+
+<div class="install">
+  <h2>Installation</h2>
+  <div class="steps">
+    <ol>
+      <li>Download the <strong>.zip</strong> file above</li>
+      <li>Extract to any folder</li>
+      <li>Open <code>chrome://extensions</code> in Chrome</li>
+      <li>Enable <strong>Developer mode</strong> (top right)</li>
+      <li>Click <strong>Load unpacked</strong> and select the extracted folder</li>
+      <li>Click the extension icon in toolbar to configure</li>
+    </ol>
+  </div>
+</div>
+
+<div class="providers">
+  <h2>Supported Providers</h2>
+  <div class="provider-grid">
+    <div class="provider-card">
+      <h3>Roundcube</h3>
+      <span class="tag tag-auto">Auto-login</span>
+      <p>Enter email, password and Roundcube URL. Extension handles login automatically.</p>
+    </div>
+    <div class="provider-card">
+      <h3>FirstMail</h3>
+      <span class="tag tag-session">Session-based</span>
+      <p>Login on firstmail.ltd with "Memorize session" checked. Extension uses browser cookies.</p>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <a href="https://github.com/AntonCocuska/mail-checker-extension">View on GitHub</a>
+</div>
+
+</body>
+</html>
