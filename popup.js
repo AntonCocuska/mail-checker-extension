@@ -1,3 +1,4 @@
+console.log("[MAIL] popup.js loaded");
 let config = null;
 let token = "";
 let messages = [];
@@ -162,6 +163,7 @@ const RC = {
   async login() {
     setStatus("Connecting...");
     const cookie = await RC._getCookieHeader();
+    console.log("[RC] login: cookie =", cookie ? cookie.substring(0, 80) + "..." : "(empty)");
     let page;
     try {
       page = await fetchWithTimeout(config.rcUrl, {
@@ -172,11 +174,16 @@ const RC = {
       if (e.name === "AbortError") throw new Error("Roundcube timeout. Server not responding.");
       throw new Error("No connection to Roundcube. Check your internet.");
     }
+    console.log("[RC] login: page status =", page.status, page.url);
     if (!page.ok) throw new Error("Roundcube returned error " + page.status);
     const html = await page.text();
     const tm = html.match(/"request_token":"([^"]+)"/);
-    if (!tm) throw new Error("Cannot reach Roundcube server");
+    if (!tm) {
+      console.log("[RC] login: no request_token found. HTML start:", html.substring(0, 500));
+      throw new Error("Cannot reach Roundcube server");
+    }
     token = tm[1];
+    console.log("[RC] login: token =", token, "task-login =", html.indexOf("task-login") !== -1);
 
     if (html.indexOf("task-login") === -1) {
       setStatus("Connected");
@@ -185,6 +192,7 @@ const RC = {
 
     setStatus("Logging in...");
     const freshCookie = await RC._getCookieHeader();
+    console.log("[RC] login POST: freshCookie =", freshCookie ? freshCookie.substring(0, 80) + "..." : "(empty)");
     const resp = await fetchWithTimeout(config.rcUrl + "?_task=login", {
       method: "POST", credentials: "include",
       headers: {
@@ -199,10 +207,12 @@ const RC = {
       redirect: "follow",
     });
     const rh = await resp.text();
+    console.log("[RC] login POST response: status =", resp.status, "url =", resp.url, "has task-login =", rh.indexOf("task-login") !== -1);
     if (rh.indexOf("task-login") !== -1 && rh.indexOf("rcmloginuser") !== -1)
       throw new Error("Wrong login/password");
     const nt = rh.match(/"request_token":"([^"]+)"/);
     if (nt) token = nt[1];
+    console.log("[RC] login: new token =", token);
     setStatus("Connected");
   },
 
@@ -211,8 +221,15 @@ const RC = {
       "?_task=mail&_action=list&_mbox=INBOX&_page=1&_layout=list&_remote=1&_unlock=0"
     );
     const text = await resp.text();
+    console.log("[RC] fetchInbox: status =", resp.status, "length =", text.length, "start =", text.substring(0, 200));
     let execStr = text;
-    try { const j = JSON.parse(text); if (j.exec) execStr = j.exec; } catch(e) {}
+    try { const j = JSON.parse(text); if (j.exec) execStr = j.exec; console.log("[RC] fetchInbox: parsed JSON, exec length =", execStr.length); } catch(e) { console.log("[RC] fetchInbox: not JSON, raw text"); }
+
+    // Detect login page — session expired
+    if (text.indexOf("task-login") !== -1 && text.indexOf("rcmloginuser") !== -1) {
+      console.log("[RC] fetchInbox: detected login page — session expired");
+      throw new Error("Session expired");
+    }
 
     const msgs = [];
     const re = /add_message_row\((\d+),(\{.*?\}),(\{.*?\})/g;
@@ -231,6 +248,7 @@ const RC = {
       try { seen = !!JSON.parse(flagsStr).seen; } catch(e) {}
       msgs.push({ uid, subject, email: em, name, date, size, seen });
     }
+    console.log("[RC] fetchInbox: parsed", msgs.length, "messages");
     return msgs;
   },
 
@@ -414,21 +432,16 @@ async function loadInbox() {
   const P = getProvider();
 
   try {
+    // Always login first to get CSRF token
+    await P.login();
     messages = await P.fetchInbox();
     renderMessages(messages);
     chrome.storage.local.set({ mailCache: { messages, time: Date.now() } });
     setStatus(`${messages.length} messages · ${new Date().toLocaleTimeString()}`);
   } catch (e) {
-    try {
-      await P.login();
-      messages = await P.fetchInbox();
-      renderMessages(messages);
-      chrome.storage.local.set({ mailCache: { messages, time: Date.now() } });
-      setStatus(`${messages.length} messages · ${new Date().toLocaleTimeString()}`);
-    } catch (e2) {
-      $("mailList").innerHTML = `<div class="error-msg">${esc(e2.message)}<br><br><button class="btn" onclick="location.reload()">Retry</button></div>`;
-      setStatus("Error");
-    }
+    console.log("[MAIL] loadInbox error:", e.message);
+    $("mailList").innerHTML = `<div class="error-msg">${esc(e.message)}<br><br><button class="btn" onclick="location.reload()">Retry</button></div>`;
+    setStatus("Error");
   }
 }
 
