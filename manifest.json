@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Mail Checker",
+  "version": "2.0",
+  "description": "Quick mail popup for webmail",
+  "permissions": ["storage", "cookies"],
+  "host_permissions": ["https://me-n.com/*", "https://firstmail.ltd/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png",
+    "default_title": "Mail"
+  },
+"icons": {
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  width: 420px;
+  height: 520px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Setup / Settings screen */
+.settings-view {
+  display: none;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+  overflow-y: auto;
+}
+.settings-view.active { display: flex; }
+.settings-view h2 { font-size: 15px; color: #e94560; margin-bottom: 14px; }
+.settings-view label { font-size: 11px; color: #b8c0c8; display: block; margin-bottom: 3px; margin-top: 10px; }
+.settings-view select,
+.settings-view input {
+  width: 100%; padding: 7px 10px; background: #16213e;
+  border: 1px solid #0f3460; color: #eee; border-radius: 4px; font-size: 12px; outline: none;
+}
+.settings-view select:focus,
+.settings-view input:focus { border-color: #e94560; }
+.settings-view .hint { font-size: 10px; color: #90a0b0; margin-top: 2px; }
+.settings-view .btns { display: flex; gap: 8px; margin-top: 16px; }
+.save-btn {
+  flex: 1; padding: 8px; background: #e94560; color: #fff;
+  border: none; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 600;
+}
+.save-btn:hover { background: #d63851; }
+.cancel-btn {
+  padding: 8px 14px; background: none; border: 1px solid #3a5a8f;
+  color: #c0c8d0; border-radius: 4px; font-size: 12px; cursor: pointer;
+}
+.cancel-btn:hover { color: #e94560; border-color: #e94560; }
+.settings-status { margin-top: 8px; font-size: 11px; text-align: center; min-height: 16px; }
+
+/* Header */
+.header {
+  background: #16213e; padding: 9px 14px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid #0f3460; flex-shrink: 0;
+}
+.header h1 { font-size: 14px; color: #e94560; }
+.header .email { font-size: 10px; color: #b0bec5; margin-top: 1px; }
+.header .actions { display: flex; gap: 5px; }
+.btn {
+  background: none; border: 1px solid #3a5a8f; color: #c0c8d0;
+  padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;
+}
+.btn:hover { color: #e94560; border-color: #e94560; }
+
+.content { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #2a3a5a #1a1a2e; }
+.content::-webkit-scrollbar { width: 6px; }
+.content::-webkit-scrollbar-track { background: #1a1a2e; }
+.content::-webkit-scrollbar-thumb { background: #2a3a5a; border-radius: 3px; }
+.content::-webkit-scrollbar-thumb:hover { background: #3a5a8f; }
+.msg-body::-webkit-scrollbar { width: 6px; }
+.msg-body::-webkit-scrollbar-track { background: #1a1a2e; }
+.msg-body::-webkit-scrollbar-thumb { background: #2a3a5a; border-radius: 3px; }
+.msg-body::-webkit-scrollbar-thumb:hover { background: #3a5a8f; }
+
+.loading, .error-msg {
+  text-align: center; padding: 40px 20px; color: #a0b0c0; font-size: 13px;
+}
+.error-msg { color: #e94560; }
+
+/* Mail list */
+.mail-item {
+  padding: 9px 14px; border-bottom: 1px solid rgba(255,255,255,0.03);
+  cursor: pointer; transition: background 0.1s; position: relative;
+}
+.mail-item:hover { background: #16213e; }
+.mail-item.unread { border-left: 3px solid #e94560; }
+.mail-item .from { font-size: 12px; font-weight: 600; color: #eee; }
+.mail-item.read .from { color: #a0a8b0; font-weight: 400; }
+.mail-item .subject {
+  font-size: 12px; color: #c8d0d8;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-top: 1px; padding-right: 24px;
+}
+.mail-item.read .subject { color: #909aa5; }
+.mail-item .meta {
+  font-size: 10px; color: #90a0b0; margin-top: 2px;
+  display: flex; justify-content: space-between;
+}
+.mail-item .del-btn {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: #8090a0; cursor: pointer;
+  font-size: 14px; padding: 4px; line-height: 1;
+  opacity: 0; transition: opacity 0.15s;
+}
+.mail-item:hover .del-btn { opacity: 1; }
+.mail-item .del-btn:hover { color: #e94560; }
+
+/* Message view */
+.msg-view { display: none; flex-direction: column; height: 100%; }
+.msg-view.active { display: flex; }
+.msg-header {
+  background: #16213e; padding: 10px 14px;
+  border-bottom: 1px solid #0f3460; flex-shrink: 0;
+}
+.back-btn {
+  background: none; border: none; color: #e94560;
+  cursor: pointer; font-size: 12px; padding: 0; margin-bottom: 5px;
+}
+.back-btn:hover { text-decoration: underline; }
+.msg-subj { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 2px; }
+.msg-from { font-size: 11px; color: #b8c0c8; }
+.msg-date { font-size: 10px; color: #a0b0c0; margin-top: 2px; }
+.msg-body {
+  padding: 14px; overflow-y: auto; overflow-x: hidden; flex: 1;
+  font-size: 12px; line-height: 1.6; color: #dde;
+  word-wrap: break-word; overflow-wrap: break-word;
+}
+.msg-body .text-render { white-space: pre-wrap; }
+.msg-body .text-render hr { border: none; border-top: 1px solid #333; margin: 8px 0; }
+.msg-body .text-render strong { color: #fff; }
+.msg-body .text-link {
+  color: #e94560; text-decoration: none; font-size: 11px;
+  background: rgba(233,69,96,0.1); padding: 1px 4px; border-radius: 3px;
+}
+.msg-body .text-link:hover { text-decoration: underline; }
+
+.list-view { display: flex; flex-direction: column; height: 100%; }
+.list-view.hidden { display: none; }
+
+.status {
+  background: #16213e; padding: 3px 14px; font-size: 10px;
+  color: #90a0b0; border-top: 1px solid #0f3460; flex-shrink: 0; text-align: center;
+}
+</style>
+</head>
+<body>
+
+<!-- Settings screen -->
+<div class="settings-view" id="settingsView">
+  <h2>Settings</h2>
+
+  <label>Provider</label>
+  <select id="cfgProvider">
+    <option value="roundcube">Roundcube (me-n.com)</option>
+    <option value="firstmail">FirstMail (firstmail.ltd)</option>
+  </select>
+
+  <div id="cfgRcBlock">
+    <label>Roundcube URL</label>
+    <input type="text" id="cfgRcUrl" value="https://me-n.com/mail/">
+  </div>
+
+  <div id="cfgFmBlock" style="display:none">
+    <div style="margin-top:10px;padding:8px 10px;background:#0f3460;border-radius:5px;font-size:12px;color:#e0e0e0;line-height:1.5">
+      Open <strong style="color:#e94560">firstmail.ltd</strong> in browser and login with <strong style="color:#4caf50">«Memorize session»</strong> checked. Extension will use that session.
+    </div>
+  </div>
+
+  <label>Email</label>
+  <input type="text" id="cfgEmail" placeholder="user@domain.com">
+
+  <label>Password</label>
+  <input type="password" id="cfgPassword" placeholder="Password">
+
+  <div class="btns">
+    <button class="cancel-btn" id="cfgCancel">Cancel</button>
+    <button class="save-btn" id="cfgSave">Save</button>
+  </div>
+  <div class="settings-status" id="cfgStatus"></div>
+</div>
+
+<!-- Mail list -->
+<div class="list-view" id="listView" style="display:none">
+  <div class="header">
+    <div>
+      <h1>Inbox</h1>
+      <div class="email" id="emailDisplay"></div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="settingsBtn" title="Settings">&#9881;</button>
+      <button class="btn" id="refreshBtn">Refresh</button>
+    </div>
+  </div>
+  <div class="content" id="mailList">
+    <div class="loading">Loading...</div>
+  </div>
+  <div class="status" id="statusBar"></div>
+</div>
+
+<!-- Message view -->
+<div class="msg-view" id="msgView">
+  <div class="msg-header">
+    <button class="back-btn" id="backBtn">&larr; Back</button>
+    <div class="msg-subj" id="msgSubj"></div>
+    <div class="msg-from" id="msgFrom"></div>
+    <div class="msg-date" id="msgDate"></div>
+  </div>
+  <div class="msg-body" id="msgBody"></div>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>
